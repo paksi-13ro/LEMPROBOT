@@ -2,7 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
 # Загружаем переменные окружения из .env файла
 load_dotenv()
@@ -11,8 +11,8 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 YANDEX_DISK_TOKEN = os.getenv('YANDEX_DISK_TOKEN')
 
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('Привет! Напиши мне запрос для поиска фотографий на Яндекс.Диске.')
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text('Привет! Напиши мне запрос для поиска фотографий на Яндекс.Диске.')
 
 def search_photos(query: str):
     headers = {
@@ -29,25 +29,23 @@ def search_photos(query: str):
     else:
         return []
 
-def handle_message(update: Update, context: CallbackContext) -> None:
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.message.text
     photos = search_photos(query)
 
     if photos:
         for photo in photos:
-            update.message.reply_text(photo['file'] + '\n')  # Отправляем ссылку на фото
+            await update.message.reply_text(photo['file'] + '\n')  # Отправляем ссылку на фото
     else:
-        update.message.reply_text('Ничего не найдено.')
+        await update.message.reply_text('Ничего не найдено.')
 
 def main():
-    updater = Updater(TELEGRAM_BOT_TOKEN)
-    dispatcher = updater.dispatcher
+    application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
-    dispatcher.add_handler(CommandHandler('start', start))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    application.add_handler(CommandHandler('start', start))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    updater.start_polling()
-    updater.idle()
+    application.run_polling()
 
 if __name__ == '__main__':
     main()
