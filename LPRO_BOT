@@ -1,11 +1,15 @@
 import os
 import requests
+from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-# Замените 'YOUR_TELEGRAM_BOT_TOKEN' и 'YOUR_YANDEX_DISK_TOKEN' на ваши токены
-TELEGRAM_BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
-YANDEX_DISK_TOKEN = 'YOUR_YANDEX_DISK_TOKEN'
+# Загружаем переменные окружения из .env файла
+load_dotenv()
+
+# Получаем токены из переменных окружения
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+YANDEX_DISK_TOKEN = os.getenv('YANDEX_DISK_TOKEN')
 
 def start(update: Update, context: CallbackContext) -> None:
     update.message.reply_text('Привет! Напиши мне запрос для поиска фотографий на Яндекс.Диске.')
