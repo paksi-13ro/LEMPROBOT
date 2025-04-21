@@ -1,0 +1,49 @@
+import os
+import requests
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+
+# Замените 'YOUR_TELEGRAM_BOT_TOKEN' и 'YOUR_YANDEX_DISK_TOKEN' на ваши токены
+TELEGRAM_BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
+YANDEX_DISK_TOKEN = 'YOUR_YANDEX_DISK_TOKEN'
+
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Привет! Напиши мне запрос для поиска фотографий на Яндекс.Диске.')
+
+def search_photos(query: str):
+    headers = {
+        'Authorization': f'OAuth {YANDEX_DISK_TOKEN}',
+    }
+    url = 'https://cloud-api.yandex.net/v1/disk/resources/search'
+    params = {
+        'query': query,
+        'media_type': 'image',
+    }
+    response = requests.get(url, headers=headers, params=params)
+    if response.status_code == 200:
+        return response.json().get('items', [])
+    else:
+        return []
+
+def handle_message(update: Update, context: CallbackContext) -> None:
+    query = update.message.text
+    photos = search_photos(query)
+
+    if photos:
+        for photo in photos:
+            update.message.reply_text(photo['file'] + '\n')  # Отправляем ссылку на фото
+    else:
+        update.message.reply_text('Ничего не найдено.')
+
+def main():
+    updater = Updater(TELEGRAM_BOT_TOKEN)
+    dispatcher = updater.dispatcher
+
+    dispatcher.add_handler(CommandHandler('start', start))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
